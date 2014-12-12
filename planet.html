@@ -8,7 +8,7 @@
   <body>
     <!-- Shaders -->
     <!-- vertex shader -->
-    <script type="x-shader/x-vertex" id="vertexshader">
+    <script type="x-shader/x-vertex" id="planetVertexShader">
       // Noise
       //
       // Description : Array and textureless GLSL 2D/3D/4D simplex
@@ -119,19 +119,58 @@
 
       varying vec2 st;
       varying vec3 v_normal;
+      varying float v_displacement;
+
+      //Function for the fractal terrain
+      float ridgedMultiFractal(vec3 point){
+        //Some parameters for the fractal
+        float frequency = 1.0;
+        const int octaves = 4;
+        float gain = 1.0;
+        float lacunarity = 1.5;
+        float offset = 0.1;
+        float H = 1.2;
+        //Array with exponents
+        float exponentArray[octaves];
+
+        float sum = 0.0;
+
+        for(int i = 0; i < octaves; ++i){
+          exponentArray[i] = pow(frequency, -H);
+          frequency = frequency*lacunarity;
+          sum += exponentArray[i];
+        }
+
+        float temp = offset-abs(snoise(point));
+        float signal = pow(temp, 2.0);
+        float result = signal;
+
+        for(int i = 1; i < octaves-1; ++i){
+          point = point*lacunarity;
+          float weight = clamp(signal*gain, 0.0, 0.1);
+
+          float temp2 = offset-abs(snoise(point));
+
+          signal = pow(temp2, 2.0)*weight;
+          result = result+signal*exponentArray[i];
+        }
+
+        return result;
+      }
 
       void main(){
-        vec3 newPosition = position + 1.0*snoise(position);
-        gl_Position = projectionMatrix * modelViewMatrix *  vec4(newPosition,1.0);
+        //vec3 newPosition = position + 1.0*snoise(position);
+        vec3 newPosition = position+normal*ridgedMultiFractal(position);
+        gl_Position = projectionMatrix*modelViewMatrix*vec4(newPosition,1.0);
         st = uv;
         v_normal = normal;
-
+        v_displacement = ridgedMultiFractal(position);
       }
 
     </script>
 
     <!-- fragment shader -->
-    <script type="x-shader/x-fragment" id="fragmentshader">
+    <script type="x-shader/x-fragment" id="planetFragmentShader">
 
       #ifdef GL_ES
       precision highp float;
@@ -139,21 +178,19 @@
 
       varying vec2 st;
       varying vec3 v_normal;
+      varying float v_displacement;
 
       void main(){
         // calc the dot product and clamp
         // 0 -> 1 rather than -1 -> 1
-        vec3 light = vec3(0.5,0.2,1.0);
 
-        // ensure it's normalized
-        light = normalize(light);
+        vec4 groundColor = vec4(0.3, 0.3, 0.3, 1.0);
+        vec4 peakColor = vec4(0.0, 1.0, 0.0, 1.0);
 
-        // calculate the dot product of
-        // the light to the vertex normal
-        float dProd = max(0.0, dot(v_normal, light));
+        vec4 finalColor = mix(groundColor, peakColor, v_displacement);
 
         // feed into our frag colour
-        gl_FragColor = vec4(dProd, dProd, dProd, 1.0);
+        gl_FragColor = finalColor;//vec4(1.0, 0.0, 0.0, 1.0);
       }
 
     </script>
@@ -184,6 +221,8 @@
     precision highp float;
     #endif
 
+
+    //Noise
     vec3 mod289(vec3 x) {
       return x - floor(x * (1.0 / 289.0)) * 289.0;
     }
