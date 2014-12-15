@@ -6,49 +6,111 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild( renderer.domElement );
 
 
-// create the sphere's material
+/************* CAMERA ***************/
 
-camera.position.z = 1000;
-camera.position.x = -100;
-camera.position.y = 100;
+camera.position.z = 200;
+camera.position.x = 0;
+camera.position.y = 0;
 
 
 var controls = new THREE.FirstPersonControls(camera);
 
 
-/******Things for sphere ***********/
+/******** LIGHT SOURCE ****************/
+
+var spotLight = new THREE.SpotLight( 0xffffff );
+spotLight.position.set( 100, 1000, 100 );
+
+spotLight.castShadow = true;
+
+spotLight.shadowMapWidth = 1024;
+spotLight.shadowMapHeight = 1024;
+
+spotLight.shadowCameraNear = 500;
+spotLight.shadowCameraFar = 4000;
+spotLight.shadowCameraFov = 30;
+
+scene.add( spotLight );
+
+
+/****** PLANET ***********/
+
+/*var origin = new THREE.Vector3(0.0, 0.0, 0.0);
+var distanceVector = oridgin.sub(camera.position);
+
+var planetUniforms = {
+  "distanceVector": {"type": "v3", "value": distanceVector}
+};
+
 
 var shaderMaterial = new THREE.ShaderMaterial({
-
+  uniforms: planetUniforms,
   vertexShader:   $('#planetVertexShader').text(),
   fragmentShader: $('#planetFragmentShader').text()
+
 });
 
-var geometry = [
 
-  [ new THREE.SphereGeometry(100, 200, 200), 50 ],
-  [ new THREE.SphereGeometry(100, 150, 150), 300 ],
-  [ new THREE.SphereGeometry(100, 100, 100), 1000 ],
-  [ new THREE.SphereGeometry(100, 50, 50), 2000 ],
-  [ new THREE.SphereGeometry(100, 25, 25), 8000 ]
+var planetGeometry = new THREE.SphereGeometry(1000, 200, 200);
 
-];
+var planet = new THREE.Mesh(planetGeometry, shaderMaterial);
+scene.add(planet); */
 
-lod = new THREE.LOD();
+//Some testing 
 
-for ( i = 0; i < geometry.length; i ++ ) {
+//Starting geometry
+//Maybe this will be sent into the quadtree?
+var geometry = new THREE.Geometry();
 
-  mesh = new THREE.Mesh( geometry[ i ][ 0 ], shaderMaterial );
-  mesh.scale.set( 1.5, 1.5, 1.5 );
-  mesh.updateMatrix();
-  mesh.matrixAutoUpdate = false;
-  lod.addLevel( mesh, geometry[ i ][ 1 ] );
-  scene.add( lod );
-}
+geometry.vertices.push(
+  // Main vertices
+  new THREE.Vector3( -20,  0, 0 ),
+  new THREE.Vector3(  20,  0, 0 ),
+  new THREE.Vector3(   0, -20, 0 ),
+  new THREE.Vector3( -20, -40, 0),
+  new THREE.Vector3( 20, -40, 0),
 
-//var sphere = new THREE.Mesh(geometry, shaderMaterial);
-//scene.add(sphere);
+  //Sub vertices
+  new THREE.Vector3(-20, -20, 0),
+  new THREE.Vector3( 0, -40, 0),
+  new THREE.Vector3( 20, -20, 0),
+  new THREE.Vector3( 0, 0, 0)
+);
 
+/*geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+geometry.faces.push( new THREE.Face3( 0, 3, 1 ) );
+geometry.faces.push( new THREE.Face3( 0, 3, 2 ) );
+geometry.faces.push( new THREE.Face3( 2, 4, 3 ) );
+geometry.faces.push( new THREE.Face3( 2, 4, 1 ) );
+geometry.faces.push( new THREE.Face3( 3, 4, 1 ) );*/
+
+geometry.faces.push( new THREE.Face3( 5, 2, 0 ) );
+geometry.faces.push( new THREE.Face3( 5, 3, 2 ) );
+
+geometry.faces.push( new THREE.Face3( 6, 2, 3 ) );
+geometry.faces.push( new THREE.Face3( 4, 2, 6 ) );
+geometry.faces.push( new THREE.Face3( 7, 2, 4 ) );
+
+geometry.faces.push( new THREE.Face3( 0, 2, 8 ) );
+geometry.faces.push( new THREE.Face3( 8, 2, 1 ) );
+geometry.faces.push( new THREE.Face3( 1, 2, 7 ) );
+
+
+var mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({wireframe:true}));
+scene.add(mesh);
+
+/***************Atmosphere **************/
+
+
+//var atmosphereGeometry = new THREE.SphereGeometry(240, 200, 200);
+
+// atmosphere = new THREE.Mesh(atmosphereGeometry, THREE.Material({color: 0xff0000}));
+//scene.add(atmosphere)
+
+
+
+
+/*** SKY BOX ***************/
 
 var skyBoxShaderMaterial = new THREE.ShaderMaterial({
   vertexShader:   $("#skyBoxVertexShader").text(),
@@ -66,23 +128,20 @@ var clock = new THREE.Clock();
 animate();
 function animate() {
   var delta = clock.getDelta();
-  requestAnimationFrame( animate );
+  
   controls.update(delta);
+
+
+  //Update the uniforms
+  //planetUniforms.distanceVector.value = origin.sub(camera.position);
+
+  requestAnimationFrame( animate );
+
   render();
 }
-
+requestAnimationFrame( animate );
 function render(){
-  scene.updateMatrixWorld();
-  scene.traverse( function ( object ) {
-
-    if ( object instanceof THREE.LOD ) {
-
-      object.update( camera );
-
-    }
-
-  } );
+  
   renderer.render(scene, camera);
 }
 
-render();
