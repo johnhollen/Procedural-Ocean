@@ -35,81 +35,23 @@ scene.add( spotLight );
 
 /****** PLANET ***********/
 
-/*var origin = new THREE.Vector3(0.0, 0.0, 0.0);
-var distanceVector = oridgin.sub(camera.position);
-
-var planetUniforms = {
-  "distanceVector": {"type": "v3", "value": distanceVector}
-};
-
-
-var shaderMaterial = new THREE.ShaderMaterial({
-  uniforms: planetUniforms,
-  vertexShader:   $('#planetVertexShader').text(),
-  fragmentShader: $('#planetFragmentShader').text()
-
+var terrain = new LOD.Plane(300, 7, 32);
+terrain.geometry(camera.position).computeFaceNormals();
+terrain.geometry(camera.position).computeVertexNormals();
+//Shaders
+var planetShaders = new THREE.ShaderMaterial({
+  vertexShader: $("#planetVertexShader").text(),
+  fragmentShader: $("#planetFragmentShader").text(),
+  //wireframe: true
 });
 
 
-var planetGeometry = new THREE.SphereGeometry(1000, 200, 200);
 
-var planet = new THREE.Mesh(planetGeometry, shaderMaterial);
-scene.add(planet); */
+var terrainMesh = new THREE.Mesh(terrain.geometry(camera.position), planetShaders);
+scene.add(terrainMesh);
 
-//Some testing 
+//controls.domElement.addEventListener('change', lodUpdate);
 
-//Starting geometry
-//Maybe this will be sent into the quadtree?
-var geometry = new THREE.Geometry();
-
-geometry.vertices.push(
-  // Main vertices
-  //NW
-  new THREE.Vector3( -20,  0, 0 ),
-  //NE
-  new THREE.Vector3(  20,  0, 0 ),
-  //Center one
-  new THREE.Vector3(   0, -20, 0 ),
-  //SW
-  new THREE.Vector3( -20, -40, 0),
-  //SE
-  new THREE.Vector3( 20, -40, 0)
-
-  //Sub vertices
-  //new THREE.Vector3(-20, -20, 0),
-  //new THREE.Vector3( 0, -40, 0),
-  //new THREE.Vector3( 20, -20, 0),
-  //new THREE.Vector3( 0, 0, 0)
-);
-
-//Adding the main vertices
-geometry.faces.push( new THREE.Face3( 0, 2, 1 ) );
-geometry.faces.push( new THREE.Face3( 0, 3, 2 ) );
-
-geometry.faces.push( new THREE.Face3( 4, 2, 3 ) );
-geometry.faces.push( new THREE.Face3( 2, 4, 1 ) );
-
-//Adding the sub vertices
-/*geometry.faces.push( new THREE.Face3( 5, 2, 0 ) );
-geometry.faces.push( new THREE.Face3( 5, 3, 2 ) );
-
-geometry.faces.push( new THREE.Face3( 6, 2, 3 ) );
-geometry.faces.push( new THREE.Face3( 4, 2, 6 ) );
-geometry.faces.push( new THREE.Face3( 7, 2, 4 ) );
-
-geometry.faces.push( new THREE.Face3( 0, 2, 8 ) );
-geometry.faces.push( new THREE.Face3( 8, 2, 1 ) );
-geometry.faces.push( new THREE.Face3( 1, 2, 7 ) );*/
-
-
-var mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({wireframe:true}));
-scene.add(mesh);
-
-
-
-var quadtree = new QuadTree(geometry);
-
-quadtree.insertNode();
 
 /***************Atmosphere **************/
 
@@ -137,21 +79,32 @@ var skyboxMesh = new THREE.Mesh( new THREE.BoxGeometry(10000, 10000, 10000, 1, 1
 scene.add(skyboxMesh);*/
 
 var clock = new THREE.Clock();
+
+/****** FUNCTIONS ********/
+
+function lodUpdate() {
+  var geometry = terrain.geometry(camera.position);
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+  if(geometry !== terrainMesh.geometry){
+    scene.remove(terrainMesh);
+    terrainMesh = new THREE.Mesh(terrain.geometry(camera.position), planetShaders);
+    scene.add(terrainMesh);
+  }
+}
+
 update();
 function update() {
-  var delta = clock.getDelta();  
+  var delta = clock.getDelta();
   controls.update(delta);
 
-  //Check for LoD, update the quadtree
-
-  
+  lodUpdate();
 
   requestAnimationFrame(update);
   render();
 }
 
 function render(){
-  
+
   renderer.render(scene, camera);
 }
-
