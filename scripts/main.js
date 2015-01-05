@@ -67,7 +67,7 @@ face6.geometry(camera.position).computeVertexNormals();
 var planetShaders = new THREE.ShaderMaterial({
   vertexShader: $("#planetVertexShader").text(),
   fragmentShader: $("#planetFragmentShader").text(),
-  wireframe: false
+  wireframe: true
 });
 
 //Create meshes from the faces
