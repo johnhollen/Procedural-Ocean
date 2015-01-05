@@ -1,4 +1,5 @@
 var scene = new THREE.Scene();
+
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 10000);
 
 var renderer = new THREE.WebGLRenderer();
@@ -35,19 +36,33 @@ scene.add( spotLight );
 
 /****** PLANET ***********/
 
-var terrain = new LOD.Plane(300, 7, 32);
+var terrain = new LOD.Plane(100, 7, 32);
+
+console.log(terrain);
+
+/*for(var i = 0; i < terrain.geometry(camera.position).vertices.length; i++){
+  var v = terrain.geometry(camera.position).vertices[i];
+  v.normalize();
+}*/
+
+var testMaterial = createHeightMap(194, 194);
+
+console.log(testMaterial);
+
 terrain.geometry(camera.position).computeFaceNormals();
 terrain.geometry(camera.position).computeVertexNormals();
 //Shaders
 var planetShaders = new THREE.ShaderMaterial({
   vertexShader: $("#planetVertexShader").text(),
   fragmentShader: $("#planetFragmentShader").text(),
-  //wireframe: true
+  wireframe: true
 });
 
 
-
 var terrainMesh = new THREE.Mesh(terrain.geometry(camera.position), planetShaders);
+terrain.position.x = 0;
+terrain.position.y = 10;
+terrain.position.z = 0;
 scene.add(terrainMesh);
 
 //controls.domElement.addEventListener('change', lodUpdate);
