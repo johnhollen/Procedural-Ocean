@@ -125,11 +125,11 @@
 
       void main(){
 
-        float displacement = snoise(position);
+        float displacement = snoise(position*2.0);
 
-        //vec3 newPosition = normal+normalize(position);//position + normal*displacement;
+        vec3 newPosition = position+10.0*displacement;//position + normal*displacement;
 
-        gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);
+        gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0);
         st = uv;
         v_position = position;
         v_displacement = displacement;
@@ -155,7 +155,7 @@
        	vec4 finalColor = mix(groundColor, peakColor, v_displacement);
        	//vec3 temp = normalize(v_normal);
         // feed into our frag colour
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        gl_FragColor = finalColor;
       }
 
     </script>
@@ -283,9 +283,9 @@
 
       vec4 spaceClouds(vec3 cubePos){
         vec3 spherePos = normalize(cubePos);
-        const int octaves = 5;
+        const int octaves = 7;
         float sum = 0.0;
-        float frequency = 4.0;
+        float frequency = 5.0;
         float weight = 1.0;
 
         for(int i = 0; i < octaves; ++i){
@@ -341,6 +341,7 @@
   <script type="text/javascript" src="libs/three.js"></script>
   <script type="text/javascript" src="libs/PointerLockControls.js"></script>
   <script type="text/javascript" src="libs/LODplane.js"></script>
+  <script type="text/javascript" src="libs/stats.min.js"></script>
 
 
   <!-- Own Scripts -->
