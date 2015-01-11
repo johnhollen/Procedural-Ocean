@@ -19,7 +19,7 @@ LOD.Node.prototype.create = function create( inX, inY, inSize, inLevel ) {
 	this.centerY = inY + inSize * 0.5;
 	this.size = inSize;
 	this.level = inLevel;
-	this.height = 0;
+	this.height = 100;
 	this.childs = [];
 	this.id = create.id;
 
@@ -211,6 +211,8 @@ LOD.Plane.prototype.geometry = function geometry( inPosition ) {
 	this.matrixWorld.getInverse( transformation );
 	position.applyMatrix4( transformation );*/
 
+	var planeSize = 100;
+
 	// Begin the new selection by browsing the quadtree
 	this.root.select( this.ranges, 0, position, this.selection );
 
@@ -249,21 +251,24 @@ LOD.Plane.prototype.geometry = function geometry( inPosition ) {
 				for( var j = 0; j < nbTiles; ++j ) {
 					var x = nodeX + size * j;
 
+					tempVector1 = new THREE.Vector3(x, planeSize, y);
+					tempVector1.normalize().multiplyScalar(planeSize);
+
 					// Manage positions
 					positions[idP] = x;
-					positions[idP+1] = 0;
+					positions[idP+1] = planeSize;
 					positions[idP+2] = y;
 
 					positions[idP+3] = x + size;
-					positions[idP+4] = 0;
+					positions[idP+4] = planeSize;
 					positions[idP+5] = y;
 
 					positions[idP+6] = x + size;
-					positions[idP+7] = 0;
+					positions[idP+7] = planeSize;
 					positions[idP+8] = y + size;
 
 					positions[idP+9] = x;
-					positions[idP+10] = 0;
+					positions[idP+10] = planeSize;
 					positions[idP+11] = y + size;
 
 					// Manage indices
