@@ -7,7 +7,7 @@
 THREE.FirstPersonControls = function ( object, domElement ) {
 
   this.object = object;
-  this.target = new THREE.Vector3( 0, 0, 0 );
+  this.target = new THREE.Vector3( 0, 1.0, 0 );
 
   this.domElement = ( domElement !== undefined ) ? domElement : document;
 
@@ -245,9 +245,9 @@ THREE.FirstPersonControls = function ( object, domElement ) {
     var targetPosition = this.target,
     position = this.object.position;
 
-    targetPosition.x = position.x + 100 * Math.sin( this.phi ) * Math.cos( this.theta );
-    targetPosition.y = position.y + 100 * Math.cos( this.phi );
-    targetPosition.z = position.z + 100 * Math.sin( this.phi ) * Math.sin( this.theta );
+    //targetPosition.x = position.x + 100 * Math.sin( this.phi ) * Math.cos( this.theta );
+    //targetPosition.y = position.y + 100 * Math.cos( this.phi );
+    //targetPosition.z = position.z + 100 * Math.sin( this.phi ) * Math.sin( this.theta );
 
     this.object.lookAt( targetPosition );
 
