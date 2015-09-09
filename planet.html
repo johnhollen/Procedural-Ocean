@@ -124,6 +124,8 @@
       varying float v_displacement;
       uniform float time;
 
+      varying vec3 N;
+      varying vec3 v;
 
       void main(){
 
@@ -153,6 +155,9 @@
         st = uv;
         v_position = position;
         v_displacement = height;
+
+        v = vec3(modelViewMatrix * vec4(position, 1.0));
+        N = normal;
       }
 
     </script>
@@ -167,17 +172,39 @@
       varying vec2 st;
       varying vec3 v_normal;
       varying float v_displacement;
-      uniform sampler2D heightMap;
+      //uniform sampler2D heightMap;
+
+      uniform vec3 pointLightColor;
+  		uniform vec3 pointLightPosition;
+  		uniform float pointLightDistance;
+  		uniform float pointLightDecay;
+
+
+      varying vec3 N;
+      varying vec3 v;
 
       void main(){
       	vec4 groundColor = vec4(0.0, 0.8, 0.8, 1.0);
       	vec4 peakColor = vec4(0.0, 0.9, 0.9, 1.0);
 
+        vec3 L = normalize(pointLightPosition - v);
+        vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)
+        vec3 R = normalize(-reflect(L, N));
+
+        //calculate Ambient Term:
+        vec4 Iamb = vec4(pointLightColor, 1.0)*pointLightDecay;
+
+        //calculate Diffuse Term:
+        vec4 Idiff = vec4(pointLightColor, 1.0)* max(dot(N,L), 0.0);
+        Idiff = clamp(Idiff, 0.0, 1.0);
+
+        // calculate Specular Term:
+        vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 9.0);
+        Ispec = clamp(Ispec, 0.0, 1.0);
 
        	vec4 finalColor = mix(groundColor, peakColor, v_displacement*0.1);
-       	//vec3 temp = normalize(v_normal);
-        // feed into our frag colour
-        gl_FragColor = texture2D(heightMap, st);
+
+        gl_FragColor = Iamb + Idiff + Ispec;
       }
 
     </script>
@@ -480,6 +507,7 @@ Vivamus mattis, neque at faucibus tincidunt, velit odio vehicula enim, at accums
   <!-- Scripts -->
   <script type="text/javascript" src="libs/jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="libs/three.js"></script>
+  <script type="text/javascript" src="libs/UniformsLib.js"></script>
   <script type="text/javascript" src="libs/PointerLockControls.js"></script>
   <script type="text/javascript" src="libs/LODplane.js"></script>
   <script type="text/javascript" src="libs/stats.min.js"></script>

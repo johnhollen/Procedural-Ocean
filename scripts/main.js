@@ -19,23 +19,47 @@ camera.position.y = 130;
 
 var controls = new THREE.FirstPersonControls(camera);
 
+/*** Light Source ***/
+var light = new THREE.PointLight( 0xffffff, 1, 200 );
+light.position.set(0, 100, 0);
+scene.add(light);
+
+/*var spotLight = new THREE.SpotLight( 0xffffff );
+spotLight.position.set( 100, 100, 0);
+
+spotLight.castShadow = true;
+
+spotLight.shadowMapWidth = 1024;
+spotLight.shadowMapHeight = 1024;
+
+spotLight.shadowCameraNear = 500;
+spotLight.shadowCameraFar = 4000;
+spotLight.shadowCameraFov = 30;
+
+scene.add( spotLight );*/
+
 
 var waterSurface = new THREE.PlaneGeometry(4000, 2000, 150, 75);
 waterSurface.needsUpdate = true;
 
 //Shaders
+var waterUniforms = THREE.UniformsLib['lights'];
 
-var waterUniforms = {
-  time: {type: "f", value: 1.0},
+waterUniforms.time = {type: "f", value: 1.0};
+waterUniforms.heightMap = {type: "t", value: createHeightMap(256, 256)};
+waterUniforms.normalMap = {type: "t", value: THREE.ImageUtils.loadTexture('./waternormals.jpg')};
+
+  /*time: {type: "f", value: 1.0},
   heightMap: {type: "t", value: createHeightMap(256, 256)},
-  normalMap: {type: "t", value: THREE.ImageUtils.loadTexture('../waternormals.jpg')}
-};
+  normalMap: {type: "t", value: THREE.ImageUtils.loadTexture('./waternormals.jpg')},
+};*/
 
 var waterShaders = new THREE.ShaderMaterial({
   uniforms: waterUniforms,
   vertexShader: $("#planetVertexShader").text(),
   fragmentShader: $("#planetFragmentShader").text(),
-  wireframe: true
+  wireframe: false,
+  lights: true
 });
 
 
@@ -49,23 +73,7 @@ waterMesh.position.x = 0;
 waterMesh.position.y = -20.0;
 waterMesh.position.z = 0;
 
-
-
-//console.log(face1.geometry(camera.position));
-
 scene.add(waterMesh);
-
-
-/*************** ATMOSPHERE **************/
-
-
-//var atmosphereGeometry = new THREE.SphereGeometry(240, 200, 200);
-
-// atmosphere = new THREE.Mesh(atmosphereGeometry, THREE.Material({color: 0xff0000}));
-//scene.add(atmosphere)
-
-
-
 
 /************** SKY BOX ***************/
 
@@ -81,13 +89,14 @@ var skyboxMesh = new THREE.Mesh( new THREE.BoxGeometry(10000, 10000, 10000, 1, 1
 // add it to the scene
 scene.add(skyboxMesh);
 
+/*** Rendering ***/
 
 var stats = new Stats();
 stats.setMode(0); // 0: fps, 1: ms
 
 // align top-left
-stats.domElement.style.position = 'fixed';
-stats.domElement.style.left = '7%';
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.left = '71%';
 stats.domElement.style.top = '10%';
 
 document.body.appendChild( stats.domElement );
@@ -96,36 +105,6 @@ var clock = new THREE.Clock();
 var worker = new Worker("scripts/lodworker.js");
 
 update();
-
-
-/********* FUNCTIONS ***********/
-
-/*function lodUpdate(){
-  var tempGeometry = face1.geometry(camera.position);
-  if(tempGeometry !== mesh1.geometry){
-    scene.remove(mesh1);
-    mesh1 = new THREE.Mesh(face1.geometry(camera.position), planetShaders);
-    //mesh1.rotation.x = Math.PI/2;
-    scene.add(mesh1);
-    //console.log("In if in lodUpdate()")
-    //worker.postMessage(face1.geometry(camera.position));
-  }
-}*/
-
-/*worker.onmessage = function(e){
-  console.log("In worker.onmessage()");
-  console.log(e.data);
-
-  var tempGeometry = new THREE.BufferGeometry();
-
-  tempGeometry.attributes = e.data.attributes;
-  tempGeometry.attributesKeys = e.data.attributesKeys;
-
-  scene.remove(mesh1);
-  mesh1 = new THREE.Mesh(tempGeometry, planetShaders);
-  scene.add(mesh1);
-
-};*/
 
 function update(){
   var delta = clock.getDelta();
