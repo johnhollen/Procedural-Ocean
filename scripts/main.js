@@ -30,7 +30,7 @@ var light = new THREE.PointLight( 0xffcc99, 1.5, 10000 );
 light.position.set(-200, 200, 2000);
 scene.add(light);
 
-var waterSurface = new THREE.PlaneGeometry(4000, 2000, 150, 75);
+var waterSurface = new THREE.PlaneGeometry(4000, 2000, 100, 50);
 waterSurface.needsUpdate = true;
 
 //Shaders
