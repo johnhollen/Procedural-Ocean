@@ -1,3 +1,3 @@
-Planet
+Procedural Ocean in Space 
 ======
-A project in the Course TNM084. A procedural planet. 
+A project in the Course TNM084. An ocean in space.
