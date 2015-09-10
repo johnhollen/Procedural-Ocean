@@ -21,7 +21,7 @@ var controls = new THREE.FirstPersonControls(camera);
 
 /*** Light Source ***/
 var light = new THREE.PointLight( 0xffcc99, 1.5, 10000 );
-light.position.set(0, 200, 2000);
+light.position.set(-200, 200, 2000);
 scene.add(light);
 
 /*var spotLight = new THREE.SpotLight( 0xffffff );
@@ -46,7 +46,7 @@ waterSurface.needsUpdate = true;
 var waterUniforms = THREE.UniformsLib['lights'];
 
 waterUniforms.time = {type: "f", value: 1.0};
-waterUniforms.heightMap = {type: "t", value: createHeightMap(256, 256)};
+//waterUniforms.heightMap = {type: "t", value: createHeightMap(256, 256)};
 waterUniforms.normalMap = {type: "t", value: THREE.ImageUtils.loadTexture('./waternormals.jpg')};
 
   /*time: {type: "f", value: 1.0},
