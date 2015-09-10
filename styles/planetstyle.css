@@ -48,8 +48,10 @@ body{
   -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
 }
 
-#fps{
-  border-radius: 3px !important;
-  -moz-border-radius: 3px !important;
-  -webkit-border-radius: 3px !important;
+#stats{
+  background-color: #fff;
+  padding: 10px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
 }

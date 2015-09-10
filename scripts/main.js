@@ -12,6 +12,12 @@ document.getElementById("canvasWrapper").appendChild( renderer.domElement );
 
 /************* CAMERA ***************/
 
+var cubeCamera = new THREE.CubeCamera(1, 10000, 256);
+cubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+cubeCamera.renderTarget.stencilBuffer = false;
+cubeCamera.renderTarget.depthBuffer = false;
+scene.add(cubeCamera);
+
 camera.position.z = -400;
 camera.position.x = 0;
 camera.position.y = 130;
@@ -24,21 +30,6 @@ var light = new THREE.PointLight( 0xffcc99, 1.5, 10000 );
 light.position.set(-200, 200, 2000);
 scene.add(light);
 
-/*var spotLight = new THREE.SpotLight( 0xffffff );
-spotLight.position.set( 100, 100, 0);
-
-spotLight.castShadow = true;
-
-spotLight.shadowMapWidth = 1024;
-spotLight.shadowMapHeight = 1024;
-
-spotLight.shadowCameraNear = 500;
-spotLight.shadowCameraFar = 4000;
-spotLight.shadowCameraFov = 30;
-
-scene.add( spotLight );*/
-
-
 var waterSurface = new THREE.PlaneGeometry(4000, 2000, 150, 75);
 waterSurface.needsUpdate = true;
 
@@ -46,13 +37,8 @@ waterSurface.needsUpdate = true;
 var waterUniforms = THREE.UniformsLib['lights'];
 
 waterUniforms.time = {type: "f", value: 1.0};
-//waterUniforms.heightMap = {type: "t", value: createHeightMap(256, 256)};
+waterUniforms.skyTexture = {type: "t", value: cubeCamera.renderTarget};
 waterUniforms.normalMap = {type: "t", value: THREE.ImageUtils.loadTexture('./waternormals.jpg')};
-
-  /*time: {type: "f", value: 1.0},
-  heightMap: {type: "t", value: createHeightMap(256, 256)},
-  normalMap: {type: "t", value: THREE.ImageUtils.loadTexture('./waternormals.jpg')},
-};*/
 
 var waterShaders = new THREE.ShaderMaterial({
   uniforms: waterUniforms,
@@ -61,9 +47,6 @@ var waterShaders = new THREE.ShaderMaterial({
   wireframe: false,
   lights: true
 });
-
-waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
-waterUniforms.normalMap.value.repeat.set( 4000, 2000 );
 
 
 //Add the meshes to the scene
@@ -91,7 +74,6 @@ var skyBoxShaderMaterial = new THREE.ShaderMaterial({
   side: THREE.BackSide
 });
 
-
 var skyboxMesh = new THREE.Mesh( new THREE.BoxGeometry(10000, 10000, 10000, 1, 1, 1, null, true ), skyBoxShaderMaterial);
 //skyboxMesh.doubleSided = true;
 // add it to the scene
@@ -104,13 +86,15 @@ stats.setMode(0); // 0: fps, 1: ms
 
 // align top-left
 stats.domElement.style.position = 'fixed';
-stats.domElement.style.right = '0px';
-stats.domElement.style.top = '0px';
+stats.domElement.style.right = '10px';
+stats.domElement.style.top = '10px';
 
 document.body.appendChild( stats.domElement );
 
 var clock = new THREE.Clock();
 var worker = new Worker("scripts/lodworker.js");
+
+cubeCamera.updateCubeMap(renderer, scene);
 
 update();
 
@@ -120,9 +104,14 @@ function update(){
   waterUniforms.time.value += delta;
   skyboxUniforms.time.value += delta;
 
+  waterMesh.visible = false;
+
+  cubeCamera.updateCubeMap(renderer, scene);
+
+  waterMesh.visible = true;
+
   requestAnimationFrame(update);
   render();
-
 }
 
 function render(){
