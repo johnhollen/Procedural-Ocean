@@ -1,7 +1,7 @@
 var scene = new THREE.Scene();
 
 var sceneHeight = 400;
-var sceneWidth = 900;
+var sceneWidth = 880;
 
 var camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
 
@@ -12,25 +12,25 @@ document.getElementById("canvasWrapper").appendChild( renderer.domElement );
 
 /************* CAMERA ***************/
 
-var cubeCamera = new THREE.CubeCamera(1, 10000, 256);
+var cubeCamera = new THREE.CubeCamera(1, 100000, 64);
 cubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
 cubeCamera.renderTarget.stencilBuffer = false;
 cubeCamera.renderTarget.depthBuffer = false;
 scene.add(cubeCamera);
 
-camera.position.z = -400;
-camera.position.x = 0;
-camera.position.y = 130;
+camera.position.z = 0;
+camera.position.x = -1000;
+camera.position.y = 150;
 
 
 var controls = new THREE.FirstPersonControls(camera);
 
 /*** Light Source ***/
-var light = new THREE.PointLight( 0xffcc99, 1.5, 10000 );
+var light = new THREE.PointLight( 0xffcc99, 1.9, 10000 );
 light.position.set(-200, 200, 2000);
 scene.add(light);
 
-var waterSurface = new THREE.PlaneGeometry(4000, 2000, 100, 50);
+var waterSurface = new THREE.PlaneGeometry(2000, 4000, 50, 100);
 waterSurface.needsUpdate = true;
 
 //Shaders

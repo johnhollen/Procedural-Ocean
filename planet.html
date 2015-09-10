@@ -135,7 +135,7 @@
         float newX = position.x;
         float newY = position.y;
 
-        const int nrWaves = 50;
+        const int nrWaves = 40;
         float noiseVar = snoise(position*0.004+time*0.2);
 
         for(int i = 0; i < nrWaves; i++){
@@ -320,15 +320,15 @@
         Idiff = clamp(Idiff, 0.0, 1.0)*pointLightDecay;
 
         // calculate Specular Term:
-        vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 10.0);
+        vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 15.0);
         Ispec = clamp(Ispec, 0.0, 1.0);
 
-        vec3 reflectedDirection = reflect(viewDirection, sampledNormal);
+        vec3 reflectedDirection = normalize(reflect(viewDirection, sampledNormal));
 
        	//vec4 finalColor = mix(groundColor, peakColor, v_displacement*0.1);
         vec4 reflectionColor = normalize(textureCube(skyTexture, reflectedDirection));
         //gl_FragColor = vec4(0.0, 0.1, 0.2, 1.0) + (Iamb + Idiff + Ispec);
-        gl_FragColor = reflectionColor*0.8 + (Iamb + Idiff + Ispec);
+        gl_FragColor = reflectionColor + (Iamb + Idiff + Ispec);
       }
 
     </script>
@@ -488,9 +488,42 @@
       </div>
       <div id="canvasWrapper"></div>
       <div id="content">
-        <h3>Project Report</h3>
+        <h2>Project Report</h2>
+
+        <h3>Introduction</h3>
         <p>
-          This project has been made by John Holl&#233;n (johho982) in the course <b>TNM084 - Procedural Images</b> at Link&ouml;ping University. The aim of this project was to
+          This project has been made by John Holl&#233;n (johho982) in the course <b>TNM084 - Procedural Images</b> at Link&ouml;ping University. The original plan was to create a procedurally generated planet, but it proved to be too challenging for me as I am not particularly skilled at OpenGL/WebGL. The plan was changed to creating an ocean instead, an ocean in space.
+          <br><br>
+          I chose to do the project in WebGL because web programming is my favorite kind of programming, and the idea of running 3D-graphics in the browser is such a cool one. 
+        </p>
+
+        <h3>Frameworks and libraries</h3>
+        <p>
+          The application is written using the following libraries: 
+          <ul>
+            <li><b>Three.js - </b> for simplifying the process of setting up a scene.</li>
+            <li><b>JQuery - </b> for DOM manipulation and loading the shaders.</li>
+            <li><b>GLSL - </b> for writing shaders.</li>
+          </ul>
+        </p>
+
+        <h3>Basic Scene Setup</h3>
+        <p>
+          The scene only consists of two objects. A big cube used as a sky box, and a plane consisting of 100x50 triangles used as the water surface. Both these objects are created by using their respective THREE.js method, THREE.CubeGeometry and THREE.PlaneGeometry. There is only one light source in the scene, a THREE.PointLight. A point light is a simple light source that does not have any direction, it only has a distance and an intensity.
+          <br><br>
+          There are also two cameras in the scene. A THREE.PerspectiveCamera which is the one we are looking through, and a THREE.CubeCamera which is used for reflecting the sky in the water. How the reflecting of the sky is done will be described later.
+        </p>
+
+        <h3>Implementing the Sky</h3>
+        <p>
+          The first idea was to create a planet, therefore the space environment was created first. First the big cube was created and scaled to a size of 10000x10000x10000 and configured to only show its inner sides. In order to attach a shader program to the sky box, a THREE.ShaderMaterial was used. The shader material-object takes shader programs as input and does all the shader binding and compiling in the background. The vertex shader for the sky box is not really interesting since it only provides the fragment shader with the texture coordinates. 
+          <br><br>
+          The fragment shader however, is a little more interesting. 
+        </p>
+
+        <h3>Implementing the Ocean</h3>
+        <p>
+        As mentioned before, the water surface consists of a plane with 100x50 triangles. 
         </p>
       </div>
     </div>
