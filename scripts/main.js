@@ -1,7 +1,7 @@
 var scene = new THREE.Scene();
 
-var sceneHeight = 300;
-var sceneWidth = 700;
+var sceneHeight = 400;
+var sceneWidth = 900;
 
 var camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
 
@@ -12,7 +12,7 @@ document.getElementById("canvasWrapper").appendChild( renderer.domElement );
 
 /************* CAMERA ***************/
 
-camera.position.z = -800;
+camera.position.z = -400;
 camera.position.x = 0;
 camera.position.y = 130;
 
@@ -20,8 +20,8 @@ camera.position.y = 130;
 var controls = new THREE.FirstPersonControls(camera);
 
 /*** Light Source ***/
-var light = new THREE.PointLight( 0xffffff, 1, 200 );
-light.position.set(0, 100, 0);
+var light = new THREE.PointLight( 0xffcc99, 1.5, 10000 );
+light.position.set(0, 200, 2000);
 scene.add(light);
 
 /*var spotLight = new THREE.SpotLight( 0xffffff );
@@ -62,6 +62,9 @@ var waterShaders = new THREE.ShaderMaterial({
   lights: true
 });
 
+waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
+waterUniforms.normalMap.value.repeat.set( 4000, 2000 );
+
 
 //Add the meshes to the scene
 //Special loop because of buffergeometry
@@ -77,7 +80,12 @@ scene.add(waterMesh);
 
 /************** SKY BOX ***************/
 
+skyboxUniforms = {
+  time: {type: "f", value: 1.0}
+}
+
 var skyBoxShaderMaterial = new THREE.ShaderMaterial({
+  uniforms: skyboxUniforms,
   vertexShader:   $("#skyBoxVertexShader").text(),
   fragmentShader: $('#skyBoxFragmentShader').text(),
   side: THREE.BackSide
@@ -95,9 +103,9 @@ var stats = new Stats();
 stats.setMode(0); // 0: fps, 1: ms
 
 // align top-left
-stats.domElement.style.position = 'absolute';
-stats.domElement.style.left = '71%';
-stats.domElement.style.top = '10%';
+stats.domElement.style.position = 'fixed';
+stats.domElement.style.right = '0px';
+stats.domElement.style.top = '0px';
 
 document.body.appendChild( stats.domElement );
 
@@ -110,7 +118,7 @@ function update(){
   var delta = clock.getDelta();
   controls.update(delta);
   waterUniforms.time.value += delta;
-  //worker.postMessage(face1.geometry(camera.position).clone());
+  skyboxUniforms.time.value += delta;
 
   requestAnimationFrame(update);
   render();
