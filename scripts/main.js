@@ -1,9 +1,9 @@
+
+
 var scene = new THREE.Scene();
 
 var sceneHeight = 400;
 var sceneWidth = 880;
-
-var camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(sceneWidth, sceneHeight);
@@ -18,16 +18,18 @@ cubeCamera.renderTarget.stencilBuffer = false;
 cubeCamera.renderTarget.depthBuffer = false;
 scene.add(cubeCamera);
 
+var camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
+
 camera.position.z = 0;
 camera.position.x = -1000;
-camera.position.y = 150;
+camera.position.y = 70;
 
 
 var controls = new THREE.FirstPersonControls(camera);
 
 /*** Light Source ***/
 var light = new THREE.PointLight( 0xffcc99, 1.9, 10000 );
-light.position.set(-200, 200, 2000);
+light.position.set(0, 20, 0);
 scene.add(light);
 
 var waterSurface = new THREE.PlaneGeometry(2000, 4000, 50, 100);
@@ -42,15 +44,14 @@ waterUniforms.normalMap = {type: "t", value: THREE.ImageUtils.loadTexture('./wat
 
 var waterShaders = new THREE.ShaderMaterial({
   uniforms: waterUniforms,
-  vertexShader: $("#planetVertexShader").text(),
-  fragmentShader: $("#planetFragmentShader").text(),
+  vertexShader: $("#oceanVertexShader").text(),
+  fragmentShader: $("#oceanFragmentShader").text(),
   wireframe: false,
   lights: true
 });
 
 
 //Add the meshes to the scene
-//Special loop because of buffergeometry
 var waterMesh = new THREE.Mesh(waterSurface, waterShaders);
 waterMesh.rotation.x = -Math.PI/2;
 waterMesh.rotation.y = 0;
@@ -75,7 +76,7 @@ var skyBoxShaderMaterial = new THREE.ShaderMaterial({
 });
 
 var skyboxMesh = new THREE.Mesh( new THREE.BoxGeometry(10000, 10000, 10000, 1, 1, 1, null, true ), skyBoxShaderMaterial);
-//skyboxMesh.doubleSided = true;
+
 // add it to the scene
 scene.add(skyboxMesh);
 
@@ -92,9 +93,8 @@ stats.domElement.style.top = '10px';
 document.body.appendChild( stats.domElement );
 
 var clock = new THREE.Clock();
-var worker = new Worker("scripts/lodworker.js");
 
-cubeCamera.updateCubeMap(renderer, scene);
+
 
 update();
 

@@ -1,14 +1,15 @@
 <!doctype html>
 <html>
   <head>
-    <title> Procedural Planet </title>
+    <title> Procedural Ocean in Space </title>
 
-    <link rel="stylesheet" type="text/css" href="./styles/planetstyle.css">
+    <link rel="stylesheet" type="text/css" href="./styles/oceanstyle.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/monokai_sublime.min.css">
   </head>
   <body>
     <!-- Shaders -->
     <!-- vertex shader -->
-    <script type="x-shader/x-vertex" id="planetVertexShader">
+    <script type="x-shader/x-vertex" id="oceanVertexShader">
       #ifdef GL_ES
       precision highp float;
       #endif
@@ -121,7 +122,6 @@
 
       varying vec2 st;
       varying vec3 v_position;
-      varying float v_displacement;
       varying vec3 viewDirection;
       uniform float time;
 
@@ -150,25 +150,19 @@
         newPosition.y = newY;
         newPosition.z = height;
 
-        //vec3 newPosition = position+position*0.14*displacement;//position + normal*displacement;
-
-
         gl_Position = projectionMatrix*modelViewMatrix*vec4(newPosition, 1.0);
         st = uv;
         v_position = position;
-        v_displacement = height;
-
         viewDirection = vec3(modelMatrix*vec4(position, 1.0) - vec4(cameraPosition, 1.0));
 
         v = vec3(modelViewMatrix * vec4(position, 1.0));
         N = (normalMatrix * normal);
-        //N = normal;
       }
 
     </script>
 
     <!-- fragment shader -->
-    <script type="x-shader/x-fragment" id="planetFragmentShader">
+    <script type="x-shader/x-fragment" id="oceanFragmentShader">
       //Noise
 
       //
@@ -279,18 +273,14 @@
       #endif
 
       varying vec2 st;
-      varying vec3 v_normal;
-      varying vec3 v_position;
       varying vec3 viewDirection;
-
-      varying float v_displacement;
+      varying vec3 v_position;
 
       uniform sampler2D normalMap;
       uniform samplerCube skyTexture;
 
       uniform vec3 pointLightColor;
   		uniform vec3 pointLightPosition;
-  		uniform float pointLightDistance;
   		uniform float pointLightDecay;
 
       uniform float time;
@@ -320,7 +310,7 @@
         Idiff = clamp(Idiff, 0.0, 1.0)*pointLightDecay;
 
         // calculate Specular Term:
-        vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 15.0);
+        vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 4.0);
         Ispec = clamp(Ispec, 0.0, 1.0);
 
         vec3 reflectedDirection = normalize(reflect(viewDirection, sampledNormal));
@@ -339,12 +329,10 @@
       precision highp float;
       #endif
 
-      varying vec2 st;
       varying vec3 v_position;
 
       void main(){
         gl_Position = projectionMatrix * modelViewMatrix *  vec4(position,1.0);
-        st = uv;
         v_position = position;
       }
     </script>
@@ -451,12 +439,13 @@
           dot(p2,x2), dot(p3,x3) ) );
         }
 
-      varying vec2 st;
       varying vec3 v_position;
       uniform float time;
 
       vec4 spaceClouds(vec3 cubePos){
+        //Normalize the cube position to map it on to a sphere.
         vec3 spherePos = normalize(cubePos);
+        
         const int octaves = 8;
         float sum = 0.0;
         float frequency = 0.7;
@@ -471,6 +460,7 @@
         float val = 0.5+0.5*sum;
         val = pow(1.8*val, 12.0);
 
+        //Return the resulting color vector.
         return vec4(0.5*val*val*val, 0.5*val*val, 0.5*val, 1.0);
       }
 
@@ -495,6 +485,8 @@
           This project has been made by John Holl&#233;n (johho982) in the course <b>TNM084 - Procedural Images</b> at Link&ouml;ping University. The original plan was to create a procedurally generated planet, but it proved to be too challenging for me as I am not particularly skilled at OpenGL/WebGL. The plan was changed to creating an ocean instead, an ocean in space.
           <br><br>
           I chose to do the project in WebGL because web programming is my favorite kind of programming, and the idea of running 3D-graphics in the browser is such a cool one. 
+          <br><br>
+          This application is tested and works fine in Safari, Chrome and Firefox on a 2011 MacBook Pro. The implementation of 3D simplex noise used in this application is fetched from [2].
         </p>
 
         <h3>Frameworks and libraries</h3>
@@ -516,14 +508,66 @@
 
         <h3>Implementing the Sky</h3>
         <p>
-          The first idea was to create a planet, therefore the space environment was created first. First the big cube was created and scaled to a size of 10000x10000x10000 and configured to only show its inner sides. In order to attach a shader program to the sky box, a THREE.ShaderMaterial was used. The shader material-object takes shader programs as input and does all the shader binding and compiling in the background. The vertex shader for the sky box is not really interesting since it only provides the fragment shader with the texture coordinates. 
+          The first idea was to create a planet, therefore the space environment was created first. First the big cube was created and scaled to a size of 10000x10000x10000 and configured to only show its inner sides. In order to attach a shader program to the sky box, a THREE.ShaderMaterial was used. The shader material-object takes shader programs as input and does all the shader binding and compiling in the background. The vertex shader for the sky box is not really interesting since it only provides the fragment shader with the vertex positions. 
           <br><br>
-          The fragment shader however, is a little more interesting. 
+          The fragment shader however, is a little more interesting. The sky texture is rendered using an eight-octave multifractal [1] that also uses the time in order for the sky to move. The full code for the sky texture is shown below.
+
+<!-- Pre tag --> 
+<pre>
+<code>
+varying vec3 v_position;
+uniform float time;
+
+vec4 spaceClouds(vec3 cubePos){
+  //Normalize the cube position to map it on to a sphere.
+  vec3 spherePos = normalize(cubePos);
+  
+  const int octaves = 8;
+  float sum = 0.0;
+  float frequency = 0.7;
+  float weight = 1.3;
+
+  for(int i = 0; i < octaves; ++i){
+    sum = sum + weight*snoise(frequency*spherePos+time*0.1);
+    frequency = 2.0*frequency;
+    weight = 0.5*weight;
+  }
+  sum = sum/float(octaves);
+  float val = 0.5+0.5*sum;
+  val = pow(1.8*val, 12.0);
+
+  //Return the resulting color vector.
+  return vec4(0.5*val*val*val, 0.5*val*val, 0.5*val, 1.0);
+}
+
+void main(){
+  gl_FragColor = spaceClouds(v_position);
+}
+</code>
+</pre>
+<!-- End Pre tag --> 
+          
+          The values for <i>frequency</i> and <i>weight</i> were found by trial and error until a satisfying result was found. When a satisfying result was found I went on with implementing the ocean.
         </p>
 
         <h3>Implementing the Ocean</h3>
         <p>
-        As mentioned before, the water surface consists of a plane with 100x50 triangles. 
+          As mentioned before, the water surface consists of a plane with 100x50 triangles. 
+        </p>
+
+        <h3>References</h3>
+        <p>
+          <ol>
+            <li>
+              Alfons Christian, <i>Real-time Procedural Planets</i>, <a href="http://www.student.itn.liu.se/%7Echral647/tnm084/tnm084-2011-real-time_procedural_planets-chral647.pdf">http://www.student.itn.liu.se/%7Echral647/tnm084/tnm084-2011-real-time_procedural_planets-chral647.pdf</a>, Accessed: 2015-09-11.
+            </li>
+            <li>
+              Ian McEwan, Ashima Arts, <a href="https://github.com/ashima/webgl-noise/blob/master/src/noise3D.glsl">https://github.com/ashima/webgl-noise/blob/master/src/noise3D.glsl</a>, Accessed: 2015-09-11.
+            </li>
+            <li>
+              NVIDIA, <i>Chapter 1. Effective Water Simulation from Physical Models</i>, <a href="http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html">http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html</a>, Accessed: 2015-09-11.
+            </li> 
+          </ol>
         </p>
       </div>
     </div>
@@ -534,17 +578,20 @@
   <script type="text/javascript" src="libs/jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="libs/three.js"></script>
   <script type="text/javascript" src="libs/UniformsLib.js"></script>
-  <!-- script type="text/javascript" src="libs/CubeCamera.js"></script -->
   <script type="text/javascript" src="libs/PointerLockControls.js"></script>
-  <script type="text/javascript" src="libs/LODplane.js"></script>
   <script type="text/javascript" src="libs/stats.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/highlight.min.js"></script>
 
 
   <!-- Own Scripts -->
-  <script type="text/javascript" src="scripts/heightmap.js"></script>
-  <script type="text/javascript" src="scripts/quadtree.js"></script>
   <script type="text/javascript" src="scripts/main.js"></script>
 
-
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('pre code').each(function(i, block) {
+        hljs.highlightBlock(block);
+      });
+    });
+  </script>
 
 </html>
