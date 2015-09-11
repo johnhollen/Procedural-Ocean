@@ -135,26 +135,34 @@
         float newX = position.x;
         float newY = position.y;
 
-        const int nrWaves = 40;
+        //Total number of waves
+        const int nrWaves = 50;
+
+        //Create the noise variable here in order to gain performance
         float noiseVar = snoise(position*0.004+time*0.2);
 
+        //Sum the waves
         for(int i = 0; i < nrWaves; i++){
-          height += dot(noiseVar, sin(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+          height += (noiseVar*sin(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
 
-          newX += dot(0.5*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
-          newY += dot(0.5*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+          newX += dot(1.0*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+          newY += dot(1.0*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
         }
 
+        //Set the new position of the vertex
         vec3 newPosition = position;
         newPosition.x = newX;
         newPosition.y = newY;
         newPosition.z = height;
-
         gl_Position = projectionMatrix*modelViewMatrix*vec4(newPosition, 1.0);
+
         st = uv;
         v_position = position;
+
+        //View direction, used for reflecting the sky
         viewDirection = vec3(modelMatrix*vec4(position, 1.0) - vec4(cameraPosition, 1.0));
 
+        //Other variables for specular lighting 
         v = vec3(modelViewMatrix * vec4(position, 1.0));
         N = (normalMatrix * normal);
       }
@@ -293,7 +301,7 @@
       	//vec4 groundColor = vec4(0.0, 0.8, 0.8, 1.0);
       	//vec4 peakColor = vec4(0.0, 0.9, 0.9, 1.0);
 
-        vec3 sampledNormal = (normalize(texture2D(normalMap, st*0.05*tan(snoise(0.1*v_position+time*2.0))).rgb*2.0-1.0) + N*0.2*sin(snoise(0.05*v_position+time)));
+        vec3 sampledNormal = (normalize(texture2D(normalMap, st*0.05*tan(snoise(0.11*v_position+time*2.0))).rgb*2.0-1.0) + N*0.2*sin(snoise(0.05*v_position+time)));
 
         //vec3 sampledNormal = (normalize(texture2D(normalMap, st).rgb*2.0-1.0)+ N*0.2*sin(snoise(0.05*v_position+time)));
 
@@ -527,7 +535,7 @@ vec4 spaceClouds(vec3 cubePos){
   float frequency = 0.7;
   float weight = 1.3;
 
-  for(int i = 0; i < octaves; ++i){
+  for(int i = 0; i &lt; octaves; ++i){
     sum = sum + weight*snoise(frequency*spherePos+time*0.1);
     frequency = 2.0*frequency;
     weight = 0.5*weight;
@@ -552,11 +560,88 @@ void main(){
 
         <h3>Implementing the Ocean</h3>
         <p>
-          As mentioned before, the water surface consists of a plane with 100x50 triangles. The first thing was to configure the water surface to render as a wire frame. When that was done the work with creating wave forms begun. I wanted to create and ocean, therefore I wanted rather large wave forms.  
+          As mentioned before, the water surface consists of a plane with 100x50 triangles. The first thing was to configure the water surface to render as a wire frame. When that was done the work with creating wave forms begun. I wanted to create and ocean, therefore I wanted rather large wave forms. To achieve ocean like wave forms, Gerstner waves were implemented in the vertex shader of the water surface.
         </p>
 
         <h4>Gerstner Waves</h4>
+        <p>
+          Regular sine waves has a rounded top, but water waved has a more pointy top. This is were the Gerstner waves come in. Gerstner waves are a sum of sine waves of different amplitudes and frequencies. The Gerstner wave function looks as follows [3]: 
+        </p>
+        <figure style="text-align:center">
+          <img src="./Imgs/gerstner.png" alt="gerstner function">
+          <figcaption>
+            Equation 1 - The Gerstner wave function. 
+          </figcaption>
+        </figure>
+        <p>
+          Where <i>A</i> is the amplitude, <i>&omega;</i> is the frequency, and <i>&phi;</i> is the phase constant. <i>Q</i> is a parameter that determines the steepness of the wave [3]. This function will not only displace the height of the wave but also the <i>x</i> and <i>y</i> coordinates of the vertex.
+          <br><br>
+          Instead of using predefined waves in the wave function I used simplex noise of the vertex position as the parameters <i>Q</i> and <i>A</i> in order to achieve waves that have a random behavior. This turned out to look quite good, and after all, it is the visual effect I am after.
+        </p> 
+        <h4>The Resulting Vertex Shader</h4>
+        <p>
+          The resulting vertex shader for the water surface is shown below: 
 
+<!-- Pre tag -->
+<pre>
+<code>
+varying vec2 st;
+varying vec3 v_position;
+varying vec3 viewDirection;
+uniform float time;
+
+varying vec3 N;
+varying vec3 v;
+
+void main(){
+
+  float height = 0.0;
+
+  float newX = position.x;
+  float newY = position.y;
+
+  //Total number of waves
+  const int nrWaves = 50;
+
+  //Create the noise variable here in order to gain performance
+  float noiseVar = snoise(position*0.004+time*0.2);
+
+  //Sum the waves
+  for(int i = 0; i < nrWaves; i++){
+    height += (noiseVar*sin(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+
+    newX += dot(1.0*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+    newY += dot(1.0*1.0*noiseVar, cos(dot(vec2(newX, newY), vec2(0.01, 0.01))+time*1.2));
+  }
+
+  //Set the new position of the vertex
+  vec3 newPosition = position;
+  newPosition.x = newX;
+  newPosition.y = newY;
+  newPosition.z = height;
+  gl_Position = projectionMatrix*modelViewMatrix*vec4(newPosition, 1.0);
+
+  st = uv;
+  v_position = position;
+
+  //View direction, used for reflecting the sky
+  viewDirection = vec3(modelMatrix*vec4(position, 1.0) - vec4(cameraPosition, 1.0));
+
+  //Other variables for specular lighting 
+  v = vec3(modelViewMatrix * vec4(position, 1.0));
+  N = (normalMatrix * normal);
+}
+</code>
+</pre>
+<!-- End pre tag -->
+          
+          When this shader was implemented, the following was what I had: 
+          <figure>
+            <img src="Imgs/oceanWireFrame.png" alt="oceanWireFrame">
+            <figcaption>Hej</figcaption>
+          </figure>
+        </p>
+        
         <h3>References</h3>
         <p>
           <ol>
