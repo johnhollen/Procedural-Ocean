@@ -60,8 +60,8 @@ THREE.UniformsLib = {
 
 		"pointLightColor" : { type: "fv", value: [] },
 		"pointLightPosition" : { type: "fv", value: [] },
-		"pointLightDistance" : { type: "fv1", value: [] },
-		"pointLightDecay" : { type: "fv1", value: [] },
+		"pointLightDistance" : { type: "v", value: 0.0 },
+		"pointLightDecay" : { type: "f", value: 0.0 },
 
 		"spotLightColor" : { type: "fv", value: [] },
 		"spotLightPosition" : { type: "fv", value: [] },

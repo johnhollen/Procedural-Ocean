@@ -62,6 +62,10 @@ figure{
   padding: 0px;
 }
 
+figcaption{
+  font-style: oblique;
+}
+
 #canvasWrapper{
   width: 880px;
   height: 400px;

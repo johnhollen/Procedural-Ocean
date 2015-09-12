@@ -298,13 +298,8 @@
       varying vec3 v;
 
       void main(){
-      	//vec4 groundColor = vec4(0.0, 0.8, 0.8, 1.0);
-      	//vec4 peakColor = vec4(0.0, 0.9, 0.9, 1.0);
-
+        //Create normal from normalMap combined with noise. 
         vec3 sampledNormal = (normalize(texture2D(normalMap, st*0.05*tan(snoise(0.11*v_position+time*2.0))).rgb*2.0-1.0) + N*0.2*sin(snoise(0.05*v_position+time)));
-
-        //vec3 sampledNormal = (normalize(texture2D(normalMap, st).rgb*2.0-1.0)+ N*0.2*sin(snoise(0.05*v_position+time)));
-
 
         vec3 L = normalize(pointLightPosition - v);
         vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)
@@ -321,12 +316,11 @@
         vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 4.0);
         Ispec = clamp(Ispec, 0.0, 1.0);
 
+        //Calculate the reflected direction from the skybox
         vec3 reflectedDirection = normalize(reflect(viewDirection, sampledNormal));
 
-       	//vec4 finalColor = mix(groundColor, peakColor, v_displacement*0.1);
         vec4 reflectionColor = normalize(textureCube(skyTexture, reflectedDirection));
-        //gl_FragColor = vec4(0.0, 0.1, 0.2, 1.0) + (Iamb + Idiff + Ispec);
-        gl_FragColor = reflectionColor + (Iamb + Idiff + Ispec);
+        gl_FragColor = (reflectionColor + (Iamb + Idiff + Ispec));
       }
 
     </script>
@@ -340,7 +334,7 @@
       varying vec3 v_position;
 
       void main(){
-        gl_Position = projectionMatrix * modelViewMatrix *  vec4(position,1.0);
+        gl_Position = projectionMatrix * modelViewMatrix *  vec4(position, 1.0);
         v_position = position;
       }
     </script>
@@ -566,13 +560,14 @@ void main(){
         <h4>Gerstner Waves</h4>
         <p>
           Regular sine waves has a rounded top, but water waved has a more pointy top. This is were the Gerstner waves come in. Gerstner waves are a sum of sine waves of different amplitudes and frequencies. The Gerstner wave function looks as follows [3]: 
+    
+          <figure style="text-align:center">
+            <img src="./Imgs/gerstner.png" alt="gerstner function">
+            <figcaption>
+              Equation 1 - The Gerstner wave function. 
+            </figcaption>
+          </figure>
         </p>
-        <figure style="text-align:center">
-          <img src="./Imgs/gerstner.png" alt="gerstner function">
-          <figcaption>
-            Equation 1 - The Gerstner wave function. 
-          </figcaption>
-        </figure>
         <p>
           Where <i>A</i> is the amplitude, <i>&omega;</i> is the frequency, and <i>&phi;</i> is the phase constant. <i>Q</i> is a parameter that determines the steepness of the wave [3]. This function will not only displace the height of the wave but also the <i>x</i> and <i>y</i> coordinates of the vertex.
           <br><br>
@@ -638,10 +633,73 @@ void main(){
           When this shader was implemented, the following was what I had: 
           <figure>
             <img src="Imgs/oceanWireFrame.png" alt="oceanWireFrame">
-            <figcaption>Figure 1 - The water with waves rendered as a wire frame. The sky box has been disabled.</figcaption>
+            <figcaption>
+              Figure 1 - The water with waves rendered as a wire frame. The sky box has been disabled.
+            </figcaption>
           </figure>
         </p>
-        
+        <p>
+          Now I had the waves of the water surface, but the surface it self was still completely flat so I went on with creating a ripply surface. This was done in the fragment shader of the water surface.           
+        </p>
+        <p>
+          The first thing that was done in the fragment shader was to implement Phong Shading using the technique in [4]. Now I had a nice looking lighting model, but the water still did not have any ripples. In order add ripples to the water surface I first attempted to use a normal map that I borrowed from [5], but I was never able to achieve a good result by simply sampling the normals directly. I instead came up with a homebrewed solution. I simply started fiddling around with noise together with the texture coordinates when I sampled the normal map. There is really nothing scientific about it, and the math is probably wrong. But the result is quite convincing.
+          <br><br>
+          As I mentioned in the beginning, the sky is also reflected in the water. The reflection was of the sky was made by using the THREE.CubeCamera mentioned previously. The cube camera will map the scene on to a cube, and its render target can be used as a texture to send in to a shader program as a uniform textureCube. By first calculating the viewDirection in the shader, the color can be extracted from the textureCube using the viewDirection. The total color of the water surface is then <i>reflectedColor + ambientLight + diffuseLight + specularLight</i>.
+          </p>
+          <h4>The Resulting Fragment Shader</h4>
+          <p>
+            The resulting fragment shader is shown below.
+<pre>
+<code>
+varying vec2 st;
+varying vec3 viewDirection;
+varying vec3 v_position;
+
+uniform sampler2D normalMap;
+uniform samplerCube skyTexture;
+
+uniform vec3 pointLightColor;
+uniform vec3 pointLightPosition;
+uniform float pointLightDecay;
+
+uniform float time;
+
+
+varying vec3 N;
+varying vec3 v;
+
+void main(){
+  //Create normal from normalMap combined with noise. 
+  vec3 sampledNormal = (normalize(texture2D(normalMap, st*0.05*tan(snoise(0.11*v_position+time*2.0))).rgb*2.0-1.0) + N*0.2*sin(snoise(0.05*v_position+time)));
+
+  vec3 L = normalize(pointLightPosition - v);
+  vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)
+  vec3 R = normalize(-reflect(L, sampledNormal));
+
+  //calculate Ambient Term:
+  vec4 Iamb = vec4(pointLightColor, 1.0)*pointLightDecay;
+
+  //calculate Diffuse Term:
+  vec4 Idiff = vec4(pointLightColor, 1.0)* max(dot(sampledNormal, L), 0.0);
+  Idiff = clamp(Idiff, 0.0, 1.0)*pointLightDecay;
+
+  // calculate Specular Term:
+  vec4 Ispec = vec4(pointLightColor, 1.0) * pow(max(dot(R,E), 0.0), 4.0);
+  Ispec = clamp(Ispec, 0.0, 1.0);
+
+  //Calculate the reflected direction from the skybox
+  vec3 reflectedDirection = normalize(reflect(viewDirection, sampledNormal));
+
+  vec4 reflectionColor = normalize(textureCube(skyTexture, reflectedDirection));
+  gl_FragColor = reflectionColor + (Iamb + Idiff + Ispec);
+}
+</code>
+</pre> 
+        </p>
+        <h3>Result</h3>
+        <p>
+          The result is at the top of the page. It is to my eyes a convincing ocean that is pleasant to look at, even though the scene itself might be unrealistic. It is also rather lightweight, running at 30 FPS on my 2011 MacBook Pro with an integrated Intel HD Graphics 3000 512 MB in Safari.
+        </p>
         <h3>References</h3>
         <p>
           <ol>
@@ -653,8 +711,12 @@ void main(){
             </li>
             <li>
               NVIDIA, <i>Chapter 1. Effective Water Simulation from Physical Models</i>, <a target="_blank" href="http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html">http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html</a>, Accessed: 2015-09-11.
+            </li>
+            <li>
+            OpenGL, <i>Per Fragment Lighting</i>, <a target="_blank" href="https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php">https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php</a>, <br>Accessed: 2015-09-12.
             </li> 
-          </ol>
+            <li>Water normal texture: <a target="_blank" href="https://github.com/jbouny/ocean/tree/master/assets/img">https://github.com/jbouny/ocean/tree/master/assets/img</a>, Accessed: 2015-09-12.</li>
+          </ol> 
         </p>
       </div>
     </div>
@@ -673,6 +735,7 @@ void main(){
   <!-- Own Scripts -->
   <script type="text/javascript" src="scripts/main.js"></script>
 
+  <!-- For highlighting code in the DOM -->
   <script type="text/javascript">
     $(document).ready(function() {
       $('pre code').each(function(i, block) {
