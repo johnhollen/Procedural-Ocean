@@ -127,6 +127,7 @@ $("#fullscreen").on("click", function(event){
   fullscreen = !fullscreen;
 
   if(fullscreen){
+    window.scrollTo(0, 0);
     sceneHeight = window.innerHeight;
     sceneWidth = window.innerWidth;
     camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
