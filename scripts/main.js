@@ -1,6 +1,7 @@
 
-
 var scene = new THREE.Scene();
+
+var fullscreen = false;
 
 var sceneHeight = 400;
 var sceneWidth = 880;
@@ -8,7 +9,7 @@ var sceneWidth = 880;
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(sceneWidth, sceneHeight);
 document.getElementById("canvasWrapper").appendChild( renderer.domElement );
-
+$("#canvasWrapper").append("<span id='fullscreen'><i class='fa fa-expand'></i></span>");
 
 /************* CAMERA ***************/
 
@@ -119,3 +120,64 @@ function render(){
   renderer.render(scene, camera);
   stats.end();
 }
+
+//For toggling full screen
+$("#fullscreen").on("click", function(event){
+
+  fullscreen = !fullscreen;
+
+  if(fullscreen){
+    sceneHeight = window.innerHeight;
+    sceneWidth = window.innerWidth;
+    camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
+
+    camera.position.z = 0;
+    camera.position.x = -1000;
+    camera.position.y = 70;
+    $("#canvasWrapper").css({
+      "position": "absolute", 
+      "left": 0, "top": 0, 
+      "height": sceneHeight, 
+      "width": sceneWidth,
+      "padding": "0px"
+    });
+    $("body").css({"overflow": "hidden"});
+    renderer.setSize(sceneWidth, sceneHeight);
+    controls = new THREE.FirstPersonControls(camera);
+    $("#fullscreen").html("<i class='fa fa-compress'></i>");
+  }
+  else if(!fullscreen){ //Reset styles and renderer
+    sceneHeight = 400;
+    sceneWidth = 880;
+    camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
+
+    camera.position.z = 0;
+    camera.position.x = -1000;
+    camera.position.y = 70;
+
+    $("#canvasWrapper").removeAttr('style');
+    $("body").removeAttr('style');
+    renderer.setSize(sceneWidth, sceneHeight);
+    controls = new THREE.FirstPersonControls(camera);
+    $("#fullscreen").html("<i class='fa fa-expand'></i>");
+  }
+});
+
+window.onresize = function(event){
+  if(fullscreen){
+    sceneHeight = window.innerHeight;
+    sceneWidth = window.innerWidth;
+    camera = new THREE.PerspectiveCamera(75, sceneWidth/sceneHeight, 0.001, 10000);
+
+    camera.position.z = 0;
+    camera.position.x = -1000;
+    camera.position.y = 70;
+    $("#canvasWrapper").css({ 
+      "height": sceneHeight, 
+      "width": sceneWidth,
+    });
+    $("body").css({"overflow": "hidden"});
+    renderer.setSize(sceneWidth, sceneHeight);
+    controls = new THREE.FirstPersonControls(camera);
+  }
+};
