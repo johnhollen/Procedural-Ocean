@@ -136,7 +136,7 @@ $("#fullscreen").on("click", function(event){
     camera.position.x = -1000;
     camera.position.y = 70;
     $("#canvasWrapper").css({
-      "position": "absolute", 
+      "position": "fixed", 
       "left": 0, "top": 0, 
       "height": sceneHeight, 
       "width": sceneWidth,
